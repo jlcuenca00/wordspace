@@ -21,19 +21,10 @@ export default function Write(){
  useEffect(()=>{document.body.classList.toggle('writingActive',focused);return()=>document.body.classList.remove('writingActive')},[focused])
  useEffect(()=>{const key=e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();save()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='n'){e.preventDefault();fresh()}};window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key)})
  const fontClass=`font-${settings.writing.font}`
- return <main className={`writeRoomV5 ${focused?'isWriting':''} ${settings.writing.typewriter?'typewriterMode':''}`}>
-  <section className="writeTopV5">
-   <div><span>Writing room</span><h1>Stay with the thought.</h1></div>
-   <div className="writeTopActions"><Link to="/library">Library</Link><button onClick={()=>openSettings('writing')}>Writing settings</button></div>
-  </section>
-  <section className="writerChromeV5">
-   <div className="writerActionsV5"><button onClick={fresh}>New</button><button className="saveWriterButton" onClick={save}>Save <kbd>Ctrl S</kbd></button><button onClick={download}>Export .txt</button></div>
-   <div className="writerStatusV5"><span className={`saveState ${status.toLowerCase()}`}>{status==='SAVING'?'Saving…':status==='SAVED'?'Saved':'Unsaved'}</span><span>{words.toLocaleString()} words</span><span>{chars.toLocaleString()} characters</span></div>
-  </section>
-  <article className="writerPaperV5">
-   <input className="documentTitleV5" placeholder="Untitled" value={title} onChange={e=>changed('title',e.target.value)} onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)}/>
-   <textarea className={`writerEditorV5 ${fontClass}`} autoFocus placeholder="Begin writing…" value={text} onChange={e=>changed('text',e.target.value)} onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)}/>
-  </article>
-  <div className="writerFooterV5"><span>{settings.writing.autosave?`Autosave ${settings.writing.autosaveDelay/1000}s`:'Manual save'}</span>{lastSaved&&<span>Last saved {new Date(lastSaved).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span>}<span>{settings.writing.typewriter?'Typewriter mode on':'Focus mode ready'}</span></div>
+ return <main className={`writeRoomV6 ${focused?'isWriting':''} ${settings.writing.typewriter?'typewriterMode':''}`}>
+  <section className="writeHeaderV6"><div><span>02 / WRITE</span><h1>Stay with the thought.</h1></div><nav><Link to="/library">Library</Link><button onClick={()=>openSettings('writing')}>Writing settings</button></nav></section>
+  <section className="writerChromeV6"><div className="writerActionsV6"><button onClick={fresh}>New</button><button className="saveWriterButton" onClick={save}>Save <kbd>Ctrl S</kbd></button><button onClick={download}>Export .txt</button></div><div className="writerStatusV6"><span className={status.toLowerCase()}>{status==='SAVING'?'Saving…':status==='SAVED'?'Saved':'Unsaved'}</span><span>{words.toLocaleString()} words</span><span>{chars.toLocaleString()} characters</span></div></section>
+  <article className="writerCanvasV6"><input className="documentTitleV6" placeholder="Untitled" value={title} onChange={e=>changed('title',e.target.value)} onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)}/><textarea className={`writerEditorV6 ${fontClass}`} autoFocus placeholder="Begin writing…" value={text} onChange={e=>changed('text',e.target.value)} onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)}/></article>
+  <div className="writerFooterV6"><span>{settings.writing.autosave?`Autosave ${settings.writing.autosaveDelay/1000}s`:'Manual save'}</span>{lastSaved&&<span>Last saved {new Date(lastSaved).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span>}<span>{settings.writing.typewriter?'Typewriter mode':'Focus ready'}</span></div>
  </main>
 }
