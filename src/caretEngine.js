@@ -14,7 +14,10 @@ function currentPosition(el, parent) {
 export function cancelCaretAnimation(caret) {
   const animation = caret && caretAnimations.get(caret)
   if (animation) animation.cancel()
-  if (caret) caretAnimations.delete(caret)
+  if (caret) {
+    caretAnimations.delete(caret)
+    caret.classList.remove('moving')
+  }
 }
 
 export function moveCaret({ caret, text, target, speed = 'medium', style = 'beam', width = 2, animate = true }) {
@@ -40,14 +43,21 @@ export function moveCaret({ caret, text, target, speed = 'medium', style = 'beam
   const duration = animate ? (DURATIONS[speed] ?? DURATIONS.medium) : 0
   if (!duration || !caret.animate) return
 
+  caret.classList.add('moving')
   const animation = caret.animate([
     { left: `${from.left}px`, top: `${from.top}px`, width: `${from.width}px`, height: `${from.height}px` },
     { left: `${to.left}px`, top: `${to.top}px`, width: `${to.width}px`, height: `${to.height}px` },
   ], { duration, easing: EASING, fill: 'none' })
 
   caretAnimations.set(caret, animation)
-  animation.onfinish = () => caretAnimations.delete(caret)
-  animation.oncancel = () => caretAnimations.delete(caret)
+  animation.onfinish = () => {
+    caretAnimations.delete(caret)
+    caret.classList.remove('moving')
+  }
+  animation.oncancel = () => {
+    caretAnimations.delete(caret)
+    caret.classList.remove('moving')
+  }
 }
 
 export function moveLineWindow({ text, target, smooth = true }) {
