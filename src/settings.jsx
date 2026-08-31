@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 
-const STORAGE='wordspace_settings_v4'
+const STORAGE='wordspace_settings_v5'
 
 export const themes={
  wordspace:{name:'WORDSPACE',bg:'#0b0d12',surface:'#10131a',text:'#f0f2f5',muted:'#737b89',faint:'#252b36',error:'#e66b70',caret:'#f7f9fc',accent:'#4d7cff'},
@@ -31,42 +31,79 @@ export const themes={
 }
 
 export const fontOptions=[
- ['inter','INTER'],['mono','DM MONO'],['roboto-mono','ROBOTO MONO'],['jetbrains-mono','JETBRAINS MONO'],['ibm-plex-mono','IBM PLEX MONO'],['fira-code','FIRA CODE'],['space-mono','SPACE MONO'],['inconsolata','INCONSOLATA'],['source-code-pro','SOURCE CODE PRO'],['ubuntu-mono','UBUNTU MONO'],['manrope','MANROPE'],['literata','LITERATA'],['lora','LORA'],['merriweather','MERRIWEATHER'],['playfair','PLAYFAIR DISPLAY'],['serif','GEORGIA'],['system','SYSTEM']
+ ['inter','INTER'],['mono','IBM PLEX MONO'],['roboto-mono','ROBOTO MONO'],['jetbrains-mono','JETBRAINS MONO'],['ibm-plex-mono','IBM PLEX MONO'],['fira-code','FIRA CODE'],['space-mono','SPACE MONO'],['inconsolata','INCONSOLATA'],['source-code-pro','SOURCE CODE PRO'],['ubuntu-mono','UBUNTU MONO'],['manrope','MANROPE'],['literata','LITERATA'],['lora','LORA'],['merriweather','MERRIWEATHER'],['playfair','PLAYFAIR DISPLAY'],['serif','GEORGIA'],['system','SYSTEM']
 ]
 
 const customDefault={name:'CUSTOM',bg:'#0d0d0c',surface:'#161614',text:'#efefe8',muted:'#64645d',faint:'#2b2b27',error:'#cf625c',caret:'#ffffff',accent:'#4d7cff'}
 
 export const defaults={
- theme:'wordspace',customTheme:customDefault,
+ theme:'wordspace',
+ customTheme:customDefault,
  test:{mode:'time',time:30,words:25,punctuation:false,numbers:false,language:'english',difficulty:'normal',quoteLength:'medium',customText:'',quickRestart:'tab'},
  behavior:{stopOnError:'off',confidence:false,strictSpace:false,typedText:'keep',lineScroll:'smooth',capsLockWarning:true,focusWarning:true,minWpm:0,minAccuracy:0},
  caret:{style:'beam',speed:'medium',blink:true,width:2,paceEnabled:false,paceWpm:80},
  typography:{font:'roboto-mono',size:40,lineHeight:1.5,letterSpacing:-0.03,width:1000},
  sound:{enabled:false,volume:0.22,profile:'soft',error:true},
- appearance:{liveWpm:true,liveAccuracy:true,timer:'minimal',controls:'hide',lines:3,motion:'full',keymap:false,keymapLayout:'qwerty',showPb:true},
- writing:{editorWidth:760,font:'literata',fontSize:30,lineHeight:1.75,autosave:true,autosaveDelay:1200,typewriter:false}
+ appearance:{liveWpm:true,liveAccuracy:true,timer:'minimal',controls:'hide',lines:3,motion:'full',keymap:false,keymapLayout:'qwerty',showPb:true}
 }
 
 const Ctx=createContext(null)
-const merge=(a,b)=>({...a,...b,customTheme:{...a.customTheme,...b?.customTheme},test:{...a.test,...b?.test},behavior:{...a.behavior,...b?.behavior},caret:{...a.caret,...b?.caret},typography:{...a.typography,...b?.typography},sound:{...a.sound,...b?.sound},appearance:{...a.appearance,...b?.appearance},writing:{...a.writing,...b?.writing}})
+const merge=(a,b)=>({
+ ...a,
+ ...b,
+ customTheme:{...a.customTheme,...b?.customTheme},
+ test:{...a.test,...b?.test},
+ behavior:{...a.behavior,...b?.behavior},
+ caret:{...a.caret,...b?.caret},
+ typography:{...a.typography,...b?.typography},
+ sound:{...a.sound,...b?.sound},
+ appearance:{...a.appearance,...b?.appearance}
+})
 
 export function SettingsProvider({children}){
- const[settings,setSettings]=useState(()=>{try{return merge(defaults,JSON.parse(localStorage.getItem(STORAGE)||localStorage.getItem('wordspace_settings_v3')||localStorage.getItem('wordspace_settings_v2')||'{}'))}catch{return defaults}})
+ const[settings,setSettings]=useState(()=>{
+  try{
+   const saved=localStorage.getItem(STORAGE)||localStorage.getItem('wordspace_settings_v4')||localStorage.getItem('wordspace_settings_v3')||localStorage.getItem('wordspace_settings_v2')||'{}'
+   return merge(defaults,JSON.parse(saved))
+  }catch{return defaults}
+ })
  const[panel,setPanel]=useState({open:false,section:'test'})
+
  useEffect(()=>{localStorage.setItem(STORAGE,JSON.stringify(settings))},[settings])
  useEffect(()=>{
-  const t=settings.theme==='custom'?settings.customTheme:(themes[settings.theme]||themes.wordspace),root=document.documentElement
-  Object.entries({'--bg':t.bg,'--surface':t.surface,'--text':t.text,'--muted':t.muted,'--faint':t.faint,'--error':t.error,'--caret':t.caret,'--accent':t.accent,'--typing-size':`${settings.typography.size}px`,'--typing-line':settings.typography.lineHeight,'--typing-spacing':`${settings.typography.letterSpacing}em`,'--typing-width':`${settings.typography.width}px`,'--writing-width':`${settings.writing.editorWidth}px`,'--writing-size':`${settings.writing.fontSize}px`,'--writing-line':settings.writing.lineHeight}).forEach(([k,v])=>root.style.setProperty(k,v))
-  root.dataset.theme=settings.theme;root.dataset.motion=settings.appearance.motion
+  const t=settings.theme==='custom'?settings.customTheme:(themes[settings.theme]||themes.wordspace)
+  const root=document.documentElement
+  Object.entries({
+   '--bg':t.bg,'--surface':t.surface,'--text':t.text,'--muted':t.muted,'--faint':t.faint,'--error':t.error,'--caret':t.caret,'--accent':t.accent,
+   '--typing-size':`${settings.typography.size}px`,'--typing-line':settings.typography.lineHeight,'--typing-spacing':`${settings.typography.letterSpacing}em`,'--typing-width':`${settings.typography.width}px`
+  }).forEach(([key,value])=>root.style.setProperty(key,value))
+  root.dataset.theme=settings.theme
+  root.dataset.motion=settings.appearance.motion
  },[settings])
- useEffect(()=>{const key=e=>{if((e.ctrlKey||e.metaKey)&&e.key===','){e.preventDefault();setPanel(p=>({...p,open:!p.open}))}if(e.key==='Escape')setPanel(p=>({...p,open:false}))};window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key)},[])
+ useEffect(()=>{
+  const key=event=>{
+   if((event.ctrlKey||event.metaKey)&&event.key===','){
+    event.preventDefault()
+    setPanel(current=>({...current,open:!current.open}))
+   }
+   if(event.key==='Escape')setPanel(current=>({...current,open:false}))
+  }
+  window.addEventListener('keydown',key)
+  return()=>window.removeEventListener('keydown',key)
+ },[])
+
  const api=useMemo(()=>({
   settings,panel,
-  update(section,patch){setSettings(s=>section?({...s,[section]:{...s[section],...patch}}):({...s,...patch}))},
-  setTheme(theme){setSettings(s=>({...s,theme}))},
-  updateCustomTheme(patch){setSettings(s=>({...s,theme:'custom',customTheme:{...s.customTheme,...patch}}))},
-  reset(){setSettings(defaults)},openSettings(section='test'){setPanel({open:true,section})},closeSettings(){setPanel(p=>({...p,open:false}))},setSection(section){setPanel(p=>({...p,section}))}
+  update(section,patch){setSettings(current=>section?({...current,[section]:{...current[section],...patch}}):({...current,...patch}))},
+  setTheme(theme){setSettings(current=>({...current,theme}))},
+  updateCustomTheme(patch){setSettings(current=>({...current,theme:'custom',customTheme:{...current.customTheme,...patch}}))},
+  reset(){setSettings(defaults)},
+  openSettings(section='test'){setPanel({open:true,section})},
+  closeSettings(){setPanel(current=>({...current,open:false}))},
+  setSection(section){setPanel(current=>({...current,section}))}
  }),[settings,panel])
+
  return <Ctx.Provider value={api}>{children}</Ctx.Provider>
 }
+
 export const useSettings=()=>useContext(Ctx)
