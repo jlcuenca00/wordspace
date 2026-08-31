@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 
-const STORAGE='wordspace_settings_v3'
+const STORAGE='wordspace_settings_v4'
 
 export const themes={
  mono:{name:'MONO',bg:'#090908',surface:'#10100f',text:'#e9e9e2',muted:'#50504b',faint:'#252522',error:'#b65d56',caret:'#f4f4ed',accent:'#e9e9e2'},
@@ -22,38 +22,50 @@ export const themes={
  cobalt:{name:'COBALT',bg:'#0b1020',surface:'#111a31',text:'#dce7ff',muted:'#637397',faint:'#1f2b49',error:'#d66574',caret:'#eef4ff',accent:'#7197e8'},
  mint:{name:'MINT',bg:'#e9f2ec',surface:'#dceae1',text:'#1e2d24',muted:'#6b8272',faint:'#c4d6ca',error:'#b65358',caret:'#223229',accent:'#6e9f80'},
  ember:{name:'EMBER',bg:'#160d0a',surface:'#25140e',text:'#f0ddd1',muted:'#805f51',faint:'#3c2119',error:'#e05555',caret:'#fff0e6',accent:'#db6d3e'},
- plum:{name:'PLUM',bg:'#190f19',surface:'#271727',text:'#eadcea',muted:'#806980',faint:'#3c263c',error:'#d46b78',caret:'#fff0ff',accent:'#b777b7'}
+ plum:{name:'PLUM',bg:'#190f19',surface:'#271727',text:'#eadcea',muted:'#806980',faint:'#3c263c',error:'#d46b78',caret:'#fff0ff',accent:'#b777b7'},
+ solar:{name:'SOLAR',bg:'#181713',surface:'#24221a',text:'#eee8c8',muted:'#7d775d',faint:'#373328',error:'#cf625b',caret:'#fff7cf',accent:'#d8b84e'},
+ ice:{name:'ICE',bg:'#0b1116',surface:'#101b23',text:'#deeff7',muted:'#58717e',faint:'#1c303b',error:'#d26772',caret:'#ecfbff',accent:'#73c8e6'},
+ wine:{name:'WINE',bg:'#180d10',surface:'#261319',text:'#f0dfe3',muted:'#80636b',faint:'#3d2028',error:'#e46e77',caret:'#fff0f3',accent:'#b96a80'},
+ moss:{name:'MOSS',bg:'#13150d',surface:'#1d2113',text:'#e4ead4',muted:'#6d7755',faint:'#2e3620',error:'#c66a5d',caret:'#f5f8e9',accent:'#91a968'}
 }
 
 export const fontOptions=[
  ['inter','INTER'],['mono','DM MONO'],['roboto-mono','ROBOTO MONO'],['jetbrains-mono','JETBRAINS MONO'],['ibm-plex-mono','IBM PLEX MONO'],['fira-code','FIRA CODE'],['space-mono','SPACE MONO'],['inconsolata','INCONSOLATA'],['source-code-pro','SOURCE CODE PRO'],['ubuntu-mono','UBUNTU MONO'],['manrope','MANROPE'],['literata','LITERATA'],['lora','LORA'],['merriweather','MERRIWEATHER'],['playfair','PLAYFAIR DISPLAY'],['serif','GEORGIA'],['system','SYSTEM']
 ]
 
+const customDefault={name:'CUSTOM',bg:'#0d0d0c',surface:'#161614',text:'#efefe8',muted:'#64645d',faint:'#2b2b27',error:'#cf625c',caret:'#ffffff',accent:'#d7ff64'}
+
 export const defaults={
- theme:'mono',
- test:{mode:'time',time:30,words:25,punctuation:false,numbers:false,language:'english',difficulty:'normal'},
- behavior:{stopOnError:'off',confidence:false,strictSpace:false,typedText:'keep',lineScroll:'smooth',capsLockWarning:true,focusWarning:true},
+ theme:'mono',customTheme:customDefault,
+ test:{mode:'time',time:30,words:25,punctuation:false,numbers:false,language:'english',difficulty:'normal',quoteLength:'medium',customText:'',quickRestart:'tab'},
+ behavior:{stopOnError:'off',confidence:false,strictSpace:false,typedText:'keep',lineScroll:'smooth',capsLockWarning:true,focusWarning:true,minWpm:0,minAccuracy:0},
  caret:{style:'beam',speed:'medium',blink:true,width:2,paceEnabled:false,paceWpm:80},
  typography:{font:'roboto-mono',size:42,lineHeight:1.5,letterSpacing:-0.03,width:1000},
  sound:{enabled:false,volume:0.22,profile:'soft',error:true},
- appearance:{liveWpm:true,liveAccuracy:true,timer:'minimal',controls:'fade',lines:3,motion:'full'},
+ appearance:{liveWpm:true,liveAccuracy:true,timer:'minimal',controls:'fade',lines:3,motion:'full',keymap:false,keymapLayout:'qwerty',showPb:true},
  writing:{editorWidth:760,font:'literata',fontSize:30,lineHeight:1.75,autosave:true,autosaveDelay:1200,typewriter:false}
 }
 
 const Ctx=createContext(null)
-const merge=(a,b)=>({...a,...b,test:{...a.test,...b?.test},behavior:{...a.behavior,...b?.behavior},caret:{...a.caret,...b?.caret},typography:{...a.typography,...b?.typography},sound:{...a.sound,...b?.sound},appearance:{...a.appearance,...b?.appearance},writing:{...a.writing,...b?.writing}})
+const merge=(a,b)=>({...a,...b,customTheme:{...a.customTheme,...b?.customTheme},test:{...a.test,...b?.test},behavior:{...a.behavior,...b?.behavior},caret:{...a.caret,...b?.caret},typography:{...a.typography,...b?.typography},sound:{...a.sound,...b?.sound},appearance:{...a.appearance,...b?.appearance},writing:{...a.writing,...b?.writing}})
 
 export function SettingsProvider({children}){
- const[settings,setSettings]=useState(()=>{try{return merge(defaults,JSON.parse(localStorage.getItem(STORAGE)||localStorage.getItem('wordspace_settings_v2')||'{}'))}catch{return defaults}})
+ const[settings,setSettings]=useState(()=>{try{return merge(defaults,JSON.parse(localStorage.getItem(STORAGE)||localStorage.getItem('wordspace_settings_v3')||localStorage.getItem('wordspace_settings_v2')||'{}'))}catch{return defaults}})
  const[panel,setPanel]=useState({open:false,section:'test'})
  useEffect(()=>{localStorage.setItem(STORAGE,JSON.stringify(settings))},[settings])
  useEffect(()=>{
-  const t=themes[settings.theme]||themes.mono,root=document.documentElement
+  const t=settings.theme==='custom'?settings.customTheme:(themes[settings.theme]||themes.mono),root=document.documentElement
   Object.entries({'--bg':t.bg,'--surface':t.surface,'--text':t.text,'--muted':t.muted,'--faint':t.faint,'--error':t.error,'--caret':t.caret,'--accent':t.accent,'--typing-size':`${settings.typography.size}px`,'--typing-line':settings.typography.lineHeight,'--typing-spacing':`${settings.typography.letterSpacing}em`,'--typing-width':`${settings.typography.width}px`,'--writing-width':`${settings.writing.editorWidth}px`,'--writing-size':`${settings.writing.fontSize}px`,'--writing-line':settings.writing.lineHeight}).forEach(([k,v])=>root.style.setProperty(k,v))
   root.dataset.theme=settings.theme;root.dataset.motion=settings.appearance.motion
  },[settings])
  useEffect(()=>{const key=e=>{if((e.ctrlKey||e.metaKey)&&e.key===','){e.preventDefault();setPanel(p=>({...p,open:!p.open}))}if(e.key==='Escape')setPanel(p=>({...p,open:false}))};window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key)},[])
- const api=useMemo(()=>({settings,panel,update(section,patch){setSettings(s=>section?({...s,[section]:{...s[section],...patch}}):({...s,...patch}))},setTheme(theme){setSettings(s=>({...s,theme}))},reset(){setSettings(defaults)},openSettings(section='test'){setPanel({open:true,section})},closeSettings(){setPanel(p=>({...p,open:false}))},setSection(section){setPanel(p=>({...p,section}))}}),[settings,panel])
+ const api=useMemo(()=>({
+  settings,panel,
+  update(section,patch){setSettings(s=>section?({...s,[section]:{...s[section],...patch}}):({...s,...patch}))},
+  setTheme(theme){setSettings(s=>({...s,theme}))},
+  updateCustomTheme(patch){setSettings(s=>({...s,theme:'custom',customTheme:{...s.customTheme,...patch}}))},
+  reset(){setSettings(defaults)},openSettings(section='test'){setPanel({open:true,section})},closeSettings(){setPanel(p=>({...p,open:false}))},setSection(section){setPanel(p=>({...p,section}))}
+ }),[settings,panel])
  return <Ctx.Provider value={api}>{children}</Ctx.Provider>
 }
 export const useSettings=()=>useContext(Ctx)
