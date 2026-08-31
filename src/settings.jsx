@@ -14,8 +14,8 @@ export const themes = {
 export const defaults = {
   theme: 'mono',
   test: { mode: 'time', time: 30, words: 25, punctuation: false, numbers: false, language: 'english', difficulty: 'normal' },
-  behavior: { stopOnError: 'off', confidence: false, strictSpace: false, typedText: 'keep', lineScroll: 'smooth' },
-  caret: { style: 'beam', speed: 'medium', blink: true, width: 2 },
+  behavior: { stopOnError: 'off', confidence: false, strictSpace: false, typedText: 'keep', lineScroll: 'smooth', capsLockWarning: true, focusWarning: true },
+  caret: { style: 'beam', speed: 'medium', blink: true, width: 2, paceEnabled: false, paceWpm: 80 },
   typography: { font: 'inter', size: 42, lineHeight: 1.5, letterSpacing: -0.03, width: 1000 },
   sound: { enabled: false, volume: 0.22, profile: 'soft', error: true },
   appearance: { liveWpm: true, liveAccuracy: true, timer: 'minimal', controls: 'fade', lines: 3, motion: 'full' },
