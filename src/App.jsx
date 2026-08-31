@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom'
 import Home from './pages/Home'
 import Type from './pages/Type'
@@ -9,9 +10,10 @@ import CommandPalette from './components/CommandPalette'
 import { SettingsProvider, useSettings } from './settings'
 
 function Shell({children}){
- const {openSettings}=useSettings()
+ const {openSettings,setTheme,update}=useSettings()
  const location=useLocation()
  const isType=location.pathname.startsWith('/type')
+ useEffect(()=>{const key='wordspace_v5_visual_migration';if(!localStorage.getItem(key)){setTheme('cobalt');update('appearance',{controls:'hide'});localStorage.setItem(key,'1')}},[])
  return <div className={`appShell newShell ${isType?'shellTyping':''}`}>
   <div className="siteGlow" aria-hidden="true"/>
   <header className="siteHeader newHeader">
