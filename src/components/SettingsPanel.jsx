@@ -1,0 +1,72 @@
+import { themes, useSettings } from '../settings'
+
+const sections = [['test','01','TEST'],['behavior','02','BEHAVIOR'],['caret','03','CARET'],['typography','04','TYPOGRAPHY'],['sound','05','SOUND'],['appearance','06','APPEARANCE'],['theme','07','THEME'],['writing','08','WRITING']]
+const Toggle=({value,onChange})=><button className={`toggle ${value?'on':''}`} onClick={()=>onChange(!value)}><i/><span>{value?'ON':'OFF'}</span></button>
+const Range=({value,min,max,step=1,onChange,unit=''})=><div className="range"><input type="range" min={min} max={max} step={step} value={value} onChange={e=>onChange(Number(e.target.value))}/><b>{value}{unit}</b></div>
+const Select=({value,onChange,children})=><select value={value} onChange={e=>onChange(e.target.value)}>{children}</select>
+const Row=({label,hint,children})=><div className="settingRow"><div><b>{label}</b>{hint&&<small>{hint}</small>}</div>{children}</div>
+
+export default function SettingsPanel(){
+ const {settings,panel,update,setTheme,reset,closeSettings,setSection}=useSettings(); if(!panel.open)return null
+ const s=panel.section
+ return <><button className="settingsScrim" aria-label="Close settings" onClick={closeSettings}/><aside className="settingsPanel">
+  <header className="settingsHead"><span>SETTINGS</span><button onClick={closeSettings}>CLOSE ×</button></header>
+  <div className="settingsBody"><nav className="settingsNav">{sections.map(([id,n,name])=><button key={id} className={s===id?'active':''} onClick={()=>setSection(id)}><i>{n}</i>{name}</button>)}</nav>
+  <section className="settingsContent"><div className="settingsTitle"><span>{sections.find(x=>x[0]===s)?.[1]} /</span><h2>{sections.find(x=>x[0]===s)?.[2]}</h2></div>
+  {s==='test'&&<>
+   <Row label="MODE"><Select value={settings.test.mode} onChange={v=>update('test',{mode:v})}><option value="time">TIME</option><option value="words">WORDS</option></Select></Row>
+   <Row label="TIME"><div className="seg">{[15,30,60,120].map(v=><button className={settings.test.time===v?'on':''} onClick={()=>update('test',{time:v})}>{v}</button>)}</div></Row>
+   <Row label="WORDS"><div className="seg">{[10,25,50,100].map(v=><button className={settings.test.words===v?'on':''} onClick={()=>update('test',{words:v})}>{v}</button>)}</div></Row>
+   <Row label="LANGUAGE"><Select value={settings.test.language} onChange={v=>update('test',{language:v})}><option value="english">ENGLISH</option></Select></Row>
+   <Row label="PUNCTUATION"><Toggle value={settings.test.punctuation} onChange={v=>update('test',{punctuation:v})}/></Row>
+   <Row label="NUMBERS"><Toggle value={settings.test.numbers} onChange={v=>update('test',{numbers:v})}/></Row>
+   <Row label="DIFFICULTY"><Select value={settings.test.difficulty} onChange={v=>update('test',{difficulty:v})}><option value="normal">NORMAL</option><option value="expert">EXPERT</option><option value="master">MASTER</option></Select></Row>
+  </>}
+  {s==='behavior'&&<>
+   <Row label="STOP ON ERROR"><Select value={settings.behavior.stopOnError} onChange={v=>update('behavior',{stopOnError:v})}><option value="off">OFF</option><option value="word">WORD</option><option value="letter">LETTER</option></Select></Row>
+   <Row label="CONFIDENCE" hint="Disable backspace during a test."><Toggle value={settings.behavior.confidence} onChange={v=>update('behavior',{confidence:v})}/></Row>
+   <Row label="STRICT SPACE"><Toggle value={settings.behavior.strictSpace} onChange={v=>update('behavior',{strictSpace:v})}/></Row>
+   <Row label="TYPED TEXT"><Select value={settings.behavior.typedText} onChange={v=>update('behavior',{typedText:v})}><option value="keep">KEEP</option><option value="fade">FADE</option><option value="hide">HIDE</option></Select></Row>
+   <Row label="LINE SCROLL"><Select value={settings.behavior.lineScroll} onChange={v=>update('behavior',{lineScroll:v})}><option value="smooth">SMOOTH</option><option value="instant">INSTANT</option></Select></Row>
+  </>}
+  {s==='caret'&&<>
+   <Row label="STYLE"><div className="seg caretChoices">{[['beam','│'],['block','█'],['underscore','_'],['outline','▯']].map(([v,x])=><button className={settings.caret.style===v?'on':''} onClick={()=>update('caret',{style:v})}>{x}</button>)}</div></Row>
+   <Row label="MOTION"><Select value={settings.caret.speed} onChange={v=>update('caret',{speed:v})}><option value="off">OFF</option><option value="slow">SLOW</option><option value="medium">MEDIUM</option><option value="fast">FAST</option></Select></Row>
+   <Row label="BLINK"><Toggle value={settings.caret.blink} onChange={v=>update('caret',{blink:v})}/></Row>
+   <Row label="WIDTH"><Range value={settings.caret.width} min={1} max={5} onChange={v=>update('caret',{width:v})} unit="PX"/></Row>
+  </>}
+  {s==='typography'&&<>
+   <Row label="TYPEFACE"><Select value={settings.typography.font} onChange={v=>update('typography',{font:v})}><option value="inter">INTER</option><option value="mono">DM MONO</option><option value="serif">SERIF</option><option value="system">SYSTEM</option></Select></Row>
+   <Row label="SIZE"><Range value={settings.typography.size} min={24} max={64} onChange={v=>update('typography',{size:v})} unit="PX"/></Row>
+   <Row label="LINE HEIGHT"><Range value={settings.typography.lineHeight} min={1.1} max={2} step={0.05} onChange={v=>update('typography',{lineHeight:v})}/></Row>
+   <Row label="LETTER SPACING"><Range value={settings.typography.letterSpacing} min={-0.06} max={0.08} step={0.005} onChange={v=>update('typography',{letterSpacing:v})} unit="EM"/></Row>
+   <Row label="TEXT WIDTH"><Range value={settings.typography.width} min={520} max={1300} step={20} onChange={v=>update('typography',{width:v})} unit="PX"/></Row>
+  </>}
+  {s==='sound'&&<>
+   <Row label="KEY SOUND"><Toggle value={settings.sound.enabled} onChange={v=>update('sound',{enabled:v})}/></Row>
+   <Row label="PROFILE"><Select value={settings.sound.profile} onChange={v=>update('sound',{profile:v})}><option value="soft">SOFT</option><option value="mechanical">MECHANICAL</option><option value="typewriter">TYPEWRITER</option><option value="minimal">MINIMAL</option></Select></Row>
+   <Row label="VOLUME"><Range value={settings.sound.volume} min={0} max={1} step={0.05} onChange={v=>update('sound',{volume:v})}/></Row>
+   <Row label="ERROR SOUND"><Toggle value={settings.sound.error} onChange={v=>update('sound',{error:v})}/></Row>
+  </>}
+  {s==='appearance'&&<>
+   <Row label="LIVE WPM"><Toggle value={settings.appearance.liveWpm} onChange={v=>update('appearance',{liveWpm:v})}/></Row>
+   <Row label="LIVE ACCURACY"><Toggle value={settings.appearance.liveAccuracy} onChange={v=>update('appearance',{liveAccuracy:v})}/></Row>
+   <Row label="TIMER"><Select value={settings.appearance.timer} onChange={v=>update('appearance',{timer:v})}><option value="minimal">MINIMAL</option><option value="bar">BAR</option><option value="hidden">HIDDEN</option></Select></Row>
+   <Row label="CONTROLS WHILE TYPING"><Select value={settings.appearance.controls} onChange={v=>update('appearance',{controls:v})}><option value="hide">HIDE</option><option value="fade">FADE</option><option value="show">SHOW</option></Select></Row>
+   <Row label="VISIBLE LINES"><div className="seg">{[2,3,4,5].map(v=><button className={settings.appearance.lines===v?'on':''} onClick={()=>update('appearance',{lines:v})}>{v}</button>)}</div></Row>
+   <Row label="MOTION"><Select value={settings.appearance.motion} onChange={v=>update('appearance',{motion:v})}><option value="reduced">REDUCED</option><option value="subtle">SUBTLE</option><option value="full">FULL</option></Select></Row>
+  </>}
+  {s==='theme'&&<div className="themeGrid">{Object.entries(themes).map(([id,t])=><button className={settings.theme===id?'active':''} onClick={()=>setTheme(id)}><span style={{background:t.bg,color:t.text,borderColor:t.faint}}>Aa</span><b>{t.name}</b></button>)}</div>}
+  {s==='writing'&&<>
+   <Row label="EDITOR WIDTH"><Range value={settings.writing.editorWidth} min={520} max={1000} step={20} onChange={v=>update('writing',{editorWidth:v})} unit="PX"/></Row>
+   <Row label="TYPEFACE"><Select value={settings.writing.font} onChange={v=>update('writing',{font:v})}><option value="serif">SERIF</option><option value="inter">INTER</option><option value="mono">DM MONO</option></Select></Row>
+   <Row label="FONT SIZE"><Range value={settings.writing.fontSize} min={18} max={48} onChange={v=>update('writing',{fontSize:v})} unit="PX"/></Row>
+   <Row label="LINE HEIGHT"><Range value={settings.writing.lineHeight} min={1.2} max={2.2} step={0.05} onChange={v=>update('writing',{lineHeight:v})}/></Row>
+   <Row label="AUTOSAVE"><Toggle value={settings.writing.autosave} onChange={v=>update('writing',{autosave:v})}/></Row>
+   <Row label="AUTOSAVE DELAY"><Range value={settings.writing.autosaveDelay} min={500} max={5000} step={250} onChange={v=>update('writing',{autosaveDelay:v})} unit="MS"/></Row>
+   <Row label="TYPEWRITER MODE"><Toggle value={settings.writing.typewriter} onChange={v=>update('writing',{typewriter:v})}/></Row>
+  </>}
+  <button className="resetSettings" onClick={reset}>RESET TO DEFAULTS</button>
+  </section></div>
+ </aside></>
+}
