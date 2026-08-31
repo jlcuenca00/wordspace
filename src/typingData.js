@@ -34,7 +34,7 @@ export const keyboardLayouts={
 }
 
 export function pickQuote(length='medium',seed=0){
- const list=originalQuotes[length]||originalQuotes.medium
+ const list=length==='all'?[...originalQuotes.short,...originalQuotes.medium,...originalQuotes.long]:(originalQuotes[length]||originalQuotes.medium)
  return list[Math.abs(seed)%list.length]
 }
 
