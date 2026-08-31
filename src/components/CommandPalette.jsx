@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { themes, useSettings } from '../settings'
 
 export default function CommandPalette(){
- const navigate=useNavigate(),{openSettings,setTheme,update}=useSettings(),[open,setOpen]=useState(false),[q,setQ]=useState(''),inputRef=useRef(null)
+ const navigate=useNavigate(),{settings,openSettings,setTheme,update}=useSettings(),[open,setOpen]=useState(false),[q,setQ]=useState(''),inputRef=useRef(null)
  useEffect(()=>{const key=e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();setOpen(v=>!v)}if(e.key==='Escape')setOpen(false)};window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key)},[])
  useEffect(()=>{if(open)requestAnimationFrame(()=>inputRef.current?.focus())},[open])
  const actions=useMemo(()=>[
@@ -16,9 +16,9 @@ export default function CommandPalette(){
   ['SETTINGS / CARET','Caret motion and pace',()=>openSettings('caret')],
   ['SETTINGS / TYPOGRAPHY','Fonts, size and spacing',()=>openSettings('typography')],
   ['SETTINGS / THEME','Change the visual system',()=>openSettings('theme')],
-  ['KEYMAP / TOGGLE','Show or hide the live keyboard',()=>update('appearance',{keymap:undefined})],
+  ['KEYMAP / TOGGLE','Show or hide the live keyboard',()=>update('appearance',{keymap:!settings.appearance.keymap})],
   ['THEME / RANDOM','Apply a random curated theme',()=>{const ids=Object.keys(themes);setTheme(ids[Math.floor(Math.random()*ids.length)])}}]
- ],[navigate,openSettings,setTheme,update])
+ ],[navigate,openSettings,setTheme,update,settings.appearance.keymap])
  const filtered=actions.filter(a=>(a[0]+' '+a[1]).toLowerCase().includes(q.toLowerCase())).slice(0,9)
  const run=fn=>{fn();setOpen(false);setQ('')}
  useEffect(()=>{const direct=()=>setOpen(true);window.addEventListener('wordspace:command',direct);return()=>window.removeEventListener('wordspace:command',direct)},[])
