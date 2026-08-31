@@ -1,1 +1,123 @@
-import{useEffect,useMemo,useRef,useState}from'react';const samples=['the quiet streets seemed almost endless as the evening light disappeared behind the buildings','perhaps memory is simply another room we continue returning to long after everything inside has changed','we often remember places not because of what happened there but because of who we were when we first arrived'];export default function Type(){const text=useMemo(()=>samples[Math.floor(Math.random()*samples.length)],[]),[input,setInput]=useState(''),[start,setStart]=useState(null),[elapsed,setElapsed]=useState(0),ref=useRef();useEffect(()=>{ref.current?.focus()},[]);useEffect(()=>{if(!start)return;let t=setInterval(()=>setElapsed((Date.now()-start)/1000),100);return()=>clearInterval(t)},[start]);let correct=[...input].filter((c,i)=>c===text[i]).length,wpm=elapsed?Math.round(correct/5/(elapsed/60)):0,done=input.length>=text.length;return <main className="type">{done?<div className="result"><p>SESSION / COMPLETE</p><strong>{wpm}</strong><h3>WORDS / MINUTE</h3><p>{Math.round(correct/input.length*100)}% ACCURACY</p><button onClick={()=>location.reload()}>AGAIN ↗</button></div>:<><div className="typebar">TIME　 <b>30</b> <b>60</b>　 WORDS　 <b>25</b> <b>50</b></div><div className="test" onClick={()=>ref.current.focus()}>{[...text].map((c,i)=><span key={i} className={i<input.length?(input[i]===c?'ok':'bad'):i===input.length?'current':''}>{c}</span>)}<input ref={ref} value={input} onChange={e=>{if(!start)setStart(Date.now());setInput(e.target.value.slice(0,text.length))}}/></div><div className="meta">{input.length?'TYPING':'START TYPING'} <span>{elapsed?Math.floor(elapsed)+' SEC':'READY'}</span></div></>}</main>}
+import { useEffect, useMemo, useRef, useState } from 'react'
+
+const WORDS = 'time place word light quiet room memory return change arrive evening street thought motion write type rhythm paper sound window small under over after before people world begin simple clear focus keyboard story every another still around between without inside outside open close slow quick soft space'.split(' ')
+
+function makeText(count, punctuation, numbers) {
+  const words = Array.from({ length: count }, () => WORDS[Math.floor(Math.random() * WORDS.length)])
+  if (punctuation) {
+    for (let i = 7; i < words.length; i += 8) words[i] += i % 16 === 7 ? ',' : '.'
+    words[0] = words[0][0].toUpperCase() + words[0].slice(1)
+  }
+  if (numbers && words.length > 5) words[Math.min(5, words.length - 1)] += ` ${Math.floor(Math.random() * 90 + 10)}`
+  return words.join(' ')
+}
+
+export default function Type() {
+  const [mode, setMode] = useState('time')
+  const [amount, setAmount] = useState(30)
+  const [punctuation, setPunctuation] = useState(false)
+  const [numbers, setNumbers] = useState(false)
+  const [seed, setSeed] = useState(0)
+  const [input, setInput] = useState('')
+  const [startedAt, setStartedAt] = useState(null)
+  const [elapsed, setElapsed] = useState(0)
+  const [finished, setFinished] = useState(false)
+  const inputRef = useRef(null)
+  const textRef = useRef(null)
+  const caretRef = useRef(null)
+
+  const text = useMemo(() => makeText(mode === 'words' ? amount : 120, punctuation, numbers), [mode, amount, punctuation, numbers, seed])
+
+  const restart = () => {
+    setInput('')
+    setStartedAt(null)
+    setElapsed(0)
+    setFinished(false)
+    setSeed(v => v + 1)
+    requestAnimationFrame(() => inputRef.current?.focus())
+  }
+
+  const choose = (nextMode, nextAmount) => {
+    setMode(nextMode)
+    setAmount(nextAmount)
+    setTimeout(restart, 0)
+  }
+
+  useEffect(() => inputRef.current?.focus(), [])
+
+  useEffect(() => {
+    if (!startedAt || finished) return
+    const tick = () => {
+      const seconds = (Date.now() - startedAt) / 1000
+      setElapsed(seconds)
+      if (mode === 'time' && seconds >= amount) setFinished(true)
+    }
+    tick()
+    const timer = setInterval(tick, 50)
+    return () => clearInterval(timer)
+  }, [startedAt, finished, mode, amount])
+
+  useEffect(() => {
+    const active = textRef.current?.querySelector(`[data-index="${Math.min(input.length, text.length - 1)}"]`)
+    if (!active || !caretRef.current || !textRef.current) return
+    const a = active.getBoundingClientRect()
+    const p = textRef.current.getBoundingClientRect()
+    caretRef.current.style.transform = `translate3d(${a.left - p.left}px, ${a.top - p.top}px, 0)`
+    caretRef.current.style.height = `${a.height}px`
+  }, [input, text])
+
+  useEffect(() => {
+    const onKey = e => {
+      if (e.key === 'Tab') { e.preventDefault(); restart() }
+      if (e.key === 'Escape') inputRef.current?.blur()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+
+  const handleInput = e => {
+    if (finished) return
+    const value = e.target.value.slice(0, text.length)
+    if (!startedAt && value.length) setStartedAt(Date.now())
+    setInput(value)
+    if (mode === 'words' && value.length >= text.length) setFinished(true)
+  }
+
+  const correct = [...input].filter((c, i) => c === text[i]).length
+  const incorrect = input.length - correct
+  const minutes = Math.max(elapsed / 60, 1 / 600)
+  const wpm = Math.max(0, Math.round((correct / 5) / minutes))
+  const raw = Math.max(0, Math.round((input.length / 5) / minutes))
+  const accuracy = input.length ? Math.round((correct / input.length) * 1000) / 10 : 100
+  const remaining = mode === 'time' ? Math.max(0, Math.ceil(amount - elapsed)) : Math.max(0, amount - input.trim().split(/\s+/).filter(Boolean).length)
+
+  return <main className={`type ${startedAt && !finished ? 'isTyping' : ''}`} onClick={() => inputRef.current?.focus()}>
+    {!finished && <>
+      <div className="typebar">
+        <button className={mode === 'time' ? 'active' : ''} onClick={e => { e.stopPropagation(); choose('time', mode === 'time' ? amount : 30) }}>TIME</button>
+        {[15,30,60,120].map(n => <button key={n} className={mode === 'time' && amount === n ? 'active' : ''} onClick={e => { e.stopPropagation(); choose('time', n) }}>{n}</button>)}
+        <i />
+        <button className={mode === 'words' ? 'active' : ''} onClick={e => { e.stopPropagation(); choose('words', mode === 'words' ? amount : 25) }}>WORDS</button>
+        {[10,25,50,100].map(n => <button key={n} className={mode === 'words' && amount === n ? 'active' : ''} onClick={e => { e.stopPropagation(); choose('words', n) }}>{n}</button>)}
+        <i />
+        <button className={punctuation ? 'active' : ''} onClick={e => { e.stopPropagation(); setPunctuation(v => !v); restart() }}>PUNCTUATION</button>
+        <button className={numbers ? 'active' : ''} onClick={e => { e.stopPropagation(); setNumbers(v => !v); restart() }}>NUMBERS</button>
+      </div>
+      <div className="testWrap">
+        <div className="test" ref={textRef}>
+          <span className="smoothCaret" ref={caretRef} />
+          {[...text].map((c, i) => <span data-index={i} key={`${seed}-${i}`} className={i < input.length ? (input[i] === c ? 'ok' : 'bad') : ''}>{c}</span>)}
+        </div>
+        <input className="ghostInput" ref={inputRef} value={input} onChange={handleInput} autoComplete="off" autoCapitalize="off" spellCheck="false" />
+      </div>
+      <div className="meta"><span>{startedAt ? `${wpm} WPM · ${accuracy}%` : 'START TYPING'}</span><span>{remaining} {mode === 'time' ? 'SEC' : 'WORDS'} · TAB RESTART</span></div>
+    </>}
+
+    {finished && <div className="result">
+      <p>SESSION / {mode.toUpperCase()} {amount}</p>
+      <strong>{wpm}</strong><h3>WORDS / MINUTE</h3>
+      <div className="resultGrid"><span><b>{accuracy}%</b>ACCURACY</span><span><b>{raw}</b>RAW</span><span><b>{incorrect}</b>ERRORS</span><span><b>{Math.round(elapsed)}s</b>TIME</span></div>
+      <button onClick={restart}>AGAIN ↗</button>
+    </div>}
+  </main>
+}
