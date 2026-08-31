@@ -17,7 +17,7 @@ export default function CommandPalette(){
   ['SETTINGS / TYPOGRAPHY','Fonts, size and spacing',()=>openSettings('typography')],
   ['SETTINGS / THEME','Change the visual system',()=>openSettings('theme')],
   ['KEYMAP / TOGGLE','Show or hide the live keyboard',()=>update('appearance',{keymap:!settings.appearance.keymap})],
-  ['THEME / RANDOM','Apply a random curated theme',()=>{const ids=Object.keys(themes);setTheme(ids[Math.floor(Math.random()*ids.length)])}}]
+  ['THEME / RANDOM','Apply a random curated theme',()=>{const ids=Object.keys(themes);setTheme(ids[Math.floor(Math.random()*ids.length)])}]
  ],[navigate,openSettings,setTheme,update,settings.appearance.keymap])
  const filtered=actions.filter(a=>(a[0]+' '+a[1]).toLowerCase().includes(q.toLowerCase())).slice(0,9)
  const run=fn=>{fn();setOpen(false);setQ('')}
