@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useSettings } from '../settings'
-const KEY='wordspace_documents',load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch{return[]}},makeDoc=()=>({id:crypto.randomUUID(),title:'',content:'',createdAt:Date.now(),updatedAt:Date.now()})
+
+const KEY='wordspace_documents'
+const load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch{return[]}}
+const makeDoc=()=>({id:crypto.randomUUID(),title:'',content:'',createdAt:Date.now(),updatedAt:Date.now()})
+
 export default function Write(){
- const {settings,openSettings}=useSettings(),initial=useMemo(()=>{const docs=load(),active=localStorage.getItem('wordspace_active_document');return docs.find(d=>d.id===active)||docs[0]||makeDoc()},[]),timer=useRef(null),dirty=useRef(false)
- const[id,setId]=useState(initial.id),[title,setTitle]=useState(initial.title),[text,setText]=useState(initial.content),[status,setStatus]=useState(load().length?'SAVED':'UNSAVED'),[lastSaved,setLastSaved]=useState(initial.updatedAt||null),[focused,setFocused]=useState(false)
+ const {settings,openSettings}=useSettings()
+ const initial=useMemo(()=>{if(localStorage.getItem('wordspace_new_document')==='1'){localStorage.removeItem('wordspace_new_document');return makeDoc()}const docs=load(),active=localStorage.getItem('wordspace_active_document');return docs.find(d=>d.id===active)||docs[0]||makeDoc()},[])
+ const timer=useRef(null),dirty=useRef(false)
+ const[id,setId]=useState(initial.id),[title,setTitle]=useState(initial.title),[text,setText]=useState(initial.content),[status,setStatus]=useState(load().some(d=>d.id===initial.id)?'SAVED':'UNSAVED'),[lastSaved,setLastSaved]=useState(initial.updatedAt||null),[focused,setFocused]=useState(false)
  const words=text.trim()?text.trim().split(/\s+/).length:0
+ const chars=text.length
  const save=()=>{clearTimeout(timer.current);const docs=load(),now=Date.now(),doc={id,title:title.trim()||'Untitled',content:text,createdAt:docs.find(d=>d.id===id)?.createdAt||now,updatedAt:now,wordCount:words};localStorage.setItem(KEY,JSON.stringify([doc,...docs.filter(d=>d.id!==id)]));localStorage.setItem('wordspace_active_document',id);setLastSaved(now);setStatus('SAVED');dirty.current=false}
  const fresh=()=>{if((title||text)&&status!=='SAVED'&&!confirm('Start a new document without saving these changes?'))return;clearTimeout(timer.current);const d=makeDoc();setId(d.id);setTitle('');setText('');setLastSaved(null);setStatus('UNSAVED');dirty.current=false;localStorage.setItem('wordspace_active_document',d.id)}
  const changed=(kind,v)=>{dirty.current=true;kind==='title'?setTitle(v):setText(v);setStatus(settings.writing.autosave?'SAVING':'UNSAVED')}
@@ -13,9 +21,19 @@ export default function Write(){
  useEffect(()=>{document.body.classList.toggle('writingActive',focused);return()=>document.body.classList.remove('writingActive')},[focused])
  useEffect(()=>{const key=e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();save()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='n'){e.preventDefault();fresh()}};window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key)})
  const fontClass=`font-${settings.writing.font}`
- return <main className={`writePage ${focused?'isWriting':''} ${settings.writing.typewriter?'typewriterMode':''}`}>
-  <div className="writeContext"><button>02 / WRITE</button><span>{words.toLocaleString()} WORDS</span><button onClick={()=>openSettings('writing')}>WRITING / SETTINGS</button></div>
-  <div className="writeToolbar"><button onClick={fresh}>＋ NEW</button><button className="primary" onClick={save}>SAVE <kbd>CTRL S</kbd></button><button onClick={download}>EXPORT .TXT</button><span className={status.toLowerCase()}>{status}{lastSaved&&status==='SAVED'?` · ${new Date(lastSaved).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`:''}</span></div>
-  <article><input className="documentTitle" placeholder="UNTITLED" value={title} onChange={e=>changed('title',e.target.value)} onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)}/><textarea className={fontClass} autoFocus placeholder="Begin." value={text} onChange={e=>changed('text',e.target.value)} onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)}/></article>
+ return <main className={`writeRoomV5 ${focused?'isWriting':''} ${settings.writing.typewriter?'typewriterMode':''}`}>
+  <section className="writeTopV5">
+   <div><span>Writing room</span><h1>Stay with the thought.</h1></div>
+   <div className="writeTopActions"><Link to="/library">Library</Link><button onClick={()=>openSettings('writing')}>Writing settings</button></div>
+  </section>
+  <section className="writerChromeV5">
+   <div className="writerActionsV5"><button onClick={fresh}>New</button><button className="saveWriterButton" onClick={save}>Save <kbd>Ctrl S</kbd></button><button onClick={download}>Export .txt</button></div>
+   <div className="writerStatusV5"><span className={`saveState ${status.toLowerCase()}`}>{status==='SAVING'?'Saving…':status==='SAVED'?'Saved':'Unsaved'}</span><span>{words.toLocaleString()} words</span><span>{chars.toLocaleString()} characters</span></div>
+  </section>
+  <article className="writerPaperV5">
+   <input className="documentTitleV5" placeholder="Untitled" value={title} onChange={e=>changed('title',e.target.value)} onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)}/>
+   <textarea className={`writerEditorV5 ${fontClass}`} autoFocus placeholder="Begin writing…" value={text} onChange={e=>changed('text',e.target.value)} onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)}/>
+  </article>
+  <div className="writerFooterV5"><span>{settings.writing.autosave?`Autosave ${settings.writing.autosaveDelay/1000}s`:'Manual save'}</span>{lastSaved&&<span>Last saved {new Date(lastSaved).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span>}<span>{settings.writing.typewriter?'Typewriter mode on':'Focus mode ready'}</span></div>
  </main>
 }
