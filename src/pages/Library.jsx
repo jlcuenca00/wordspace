@@ -1,0 +1,1 @@
+export default function Library(){return <main className="library"><p>LIBRARY / 03</p><h1>WORDS,<br/><i>KEPT.</i></h1><section><div><b>YOUR WRITING</b><span>LOCAL</span></div><div><b>PASSAGES</b><span>COMING NEXT</span></div><div><b>PERSONAL PRACTICE</b><span>COMING NEXT</span></div></section></main>}
