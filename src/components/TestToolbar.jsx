@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSettings } from '../settings'
 import { wordLibraries } from '../wordLibrary'
 
@@ -19,6 +19,71 @@ const QUOTE_VALUES = [
   ['all', 'all']
 ]
 
+const DIFFICULTIES = [
+  ['normal', 'normal', 'Normal typing'],
+  ['expert', 'expert', 'Stop on incorrect word'],
+  ['master', 'master', 'Stop on incorrect letter']
+]
+
+function ToolbarSelect({ label, value, options, onChange }) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef(null)
+  const selected = options.find(option => option[0] === value) || options[0]
+
+  useEffect(() => {
+    if (!open) return
+    const close = event => {
+      if (!rootRef.current?.contains(event.target)) setOpen(false)
+    }
+    const onKey = event => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    window.addEventListener('pointerdown', close)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('pointerdown', close)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  return (
+    <div className={`toolbarSelect ${open ? 'open' : ''}`} ref={rootRef}>
+      <span className="toolbarSelectLabel">{label}</span>
+      <button
+        type="button"
+        className="toolbarSelectTrigger"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen(current => !current)}
+      >
+        <b>{selected?.[1] || value}</b>
+        <i aria-hidden="true" />
+      </button>
+      {open && (
+        <div className="toolbarSelectMenu" role="listbox" aria-label={label}>
+          {options.map(([id, text, detail]) => (
+            <button
+              type="button"
+              key={id}
+              role="option"
+              aria-selected={id === value}
+              className={id === value ? 'active' : ''}
+              onClick={() => {
+                onChange(id)
+                setOpen(false)
+              }}
+            >
+              <span>{text}</span>
+              {detail && <small>{detail}</small>}
+              {id === value && <em>✓</em>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function TestToolbar({ locked = false }) {
   const { settings, update, openSettings } = useSettings()
   const cfg = settings.test
@@ -29,6 +94,10 @@ export default function TestToolbar({ locked = false }) {
   const library = useMemo(
     () => wordLibraries.find(item => item.id === cfg.language) || wordLibraries[0],
     [cfg.language]
+  )
+  const languageOptions = useMemo(
+    () => wordLibraries.map(item => [item.id, item.label, item.detail]),
+    []
   )
 
   useEffect(() => setDraft(cfg.customText || ''), [cfg.customText])
@@ -109,23 +178,21 @@ export default function TestToolbar({ locked = false }) {
           </div>
         </div>
 
-        <div className="toolbarSecondary">
+        <div className="toolbarSecondary toolbarSecondaryV2">
           {wordBased && (
-            <label>
-              <span>language</span>
-              <select value={cfg.language} onChange={event => patch({ language: event.target.value })}>
-                {wordLibraries.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
-              </select>
-            </label>
+            <ToolbarSelect
+              label="language"
+              value={cfg.language}
+              options={languageOptions}
+              onChange={value => patch({ language: value })}
+            />
           )}
-          <label>
-            <span>difficulty</span>
-            <select value={cfg.difficulty} onChange={event => patch({ difficulty: event.target.value })}>
-              <option value="normal">normal</option>
-              <option value="expert">expert</option>
-              <option value="master">master</option>
-            </select>
-          </label>
+          <ToolbarSelect
+            label="difficulty"
+            value={cfg.difficulty}
+            options={DIFFICULTIES}
+            onChange={value => patch({ difficulty: value })}
+          />
           <span className="wordsetDetail">{wordBased ? library.detail : cfg.mode === 'quote' ? 'curated quotes' : cfg.mode === 'custom' ? 'your text' : 'adaptive practice'}</span>
           <button className="advancedButton" onClick={() => openSettings('test')}>advanced settings</button>
         </div>
