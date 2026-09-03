@@ -1,39 +1,16 @@
-/* Direct theme browser: no featured-vs-more split. */
-.settingsContentV2 .settingsGroupV2:has(.themeGridV2)>header h3{
-  font-size:0;
+/* Full theme browser: every palette is rendered directly by SettingsPanel. */
+.themeGridAllV2{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+  padding:18px 0 8px;
 }
-.settingsContentV2 .settingsGroupV2:has(.themeGridV2)>header h3::after{
-  content:'Themes';
-  font:650 17px/1.15 Inter,sans-serif;
-  letter-spacing:-.025em;
+.themeGridAllV2 .themeSwatchV2{
+  height:76px;
 }
-.settingsContentV2 .settingsGroupV2:has(.themeGridV2)>header p{
-  font-size:0;
-}
-.settingsContentV2 .settingsGroupV2:has(.themeGridV2)>header p::after{
-  content:'Every theme is shown here. Pick one and the entire interface updates immediately.';
-  font:400 11.5px/1.45 Inter,sans-serif;
-  color:var(--muted);
-}
-.moreThemesV2{
-  display:block!important;
-  margin-top:0!important;
-  border:0!important;
-  border-radius:0!important;
-  background:transparent!important;
-  overflow:visible!important;
-}
-.moreThemesV2>summary{
-  display:none!important;
-}
-.moreThemesV2>.disclosureBodyV2{
-  display:grid!important;
-  border-top:0!important;
-  padding:0 21px 18px!important;
-}
-.moreThemesV2 .themeGridV2{
-  width:100%;
-  padding-top:7px!important;
+.themeGridAllV2 .themeNameV2>b{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 
 /* Keep native selects readable anywhere they are still used. */
@@ -182,10 +159,19 @@ select option{
   color:color-mix(in srgb,var(--accent) 72%,var(--muted));
 }
 
+@media(max-width:1000px){
+  .themeGridAllV2{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+
 @media(max-width:720px){
-  .moreThemesV2>.disclosureBodyV2{padding-left:0!important;padding-right:0!important}
+  .themeGridAllV2{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .toolbarSecondaryV2{align-items:flex-start}
   .toolbarSelect{min-width:140px}
   .toolbarSelectMenu{position:fixed;left:16px;right:16px;top:auto;bottom:16px;width:auto;max-height:52vh;padding:8px;border-radius:10px}
   .toolbarSelectMenu>button{min-height:50px}
+}
+
+@media(max-width:430px){
+  .themeGridAllV2{grid-template-columns:1fr 1fr;gap:9px}
+  .themeGridAllV2 .themeSwatchV2{height:70px}
 }
