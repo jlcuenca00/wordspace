@@ -5,26 +5,9 @@ import { moveCaret, moveLineWindow, paceIndex, resetLineWindow, cancelCaretAnima
 import { createTestText, loadWordLibrary, wordLibraries } from '../wordLibrary'
 import { buildPracticeText, consistencyScore, pickQuote } from '../typingData'
 import { getPersonalBest, saveSession, weaknessReport } from '../sessionStore'
+import { playKeySound, preloadSoundPack } from '../keySoundEngine'
 import KeyboardGuide from '../components/KeyboardGuide'
 import TestToolbar from '../components/TestToolbar'
-
-function playKeySound(settings, error = false) {
-  if (!settings.sound.enabled || (error && !settings.sound.error)) return
-  try {
-    const Audio = window.AudioContext || window.webkitAudioContext
-    const context = new Audio()
-    const oscillator = context.createOscillator()
-    const gain = context.createGain()
-    const base = settings.sound.profile === 'mechanical' ? 180 : settings.sound.profile === 'typewriter' ? 120 : settings.sound.profile === 'minimal' ? 360 : 260
-    oscillator.frequency.value = error ? 110 : base + Math.random() * 35
-    gain.gain.value = settings.sound.volume * 0.035
-    oscillator.connect(gain)
-    gain.connect(context.destination)
-    oscillator.start()
-    oscillator.stop(context.currentTime + 0.025)
-    oscillator.onended = () => context.close()
-  } catch {}
-}
 
 function ResultGraph({ samples }) {
   if (!samples?.length) return <div className="resultGraph empty">No live samples</div>
@@ -152,6 +135,10 @@ export default function Type() {
   }, [])
 
   useEffect(() => {
+    if (settings.sound.enabled) preloadSoundPack(settings.sound.profile).catch(() => {})
+  }, [settings.sound.enabled, settings.sound.profile])
+
+  useEffect(() => {
     let alive = true
     if (cfg.mode === 'quote' || cfg.mode === 'custom') {
       setLibraryStatus('ready')
@@ -244,6 +231,18 @@ export default function Type() {
   useEffect(() => {
     const onKeyDown = event => {
       setCapsLock(Boolean(event.getModifierState?.('CapsLock')))
+
+      const typingInputActive = document.activeElement === inputRef.current
+      if (
+        settings.sound.enabled &&
+        typingInputActive &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        !event.altKey
+      ) {
+        playKeySound(settings.sound.profile, event.code, settings.sound.volume)
+      }
+
       const configuredRestart =
         (cfg.quickRestart === 'tab' && event.key === 'Tab') ||
         (cfg.quickRestart === 'escape' && event.key === 'Escape') ||
@@ -269,7 +268,7 @@ export default function Type() {
       window.removeEventListener('keyup', onKeyUp)
       window.removeEventListener('wordspace:restart', onRestart)
     }
-  }, [settings.behavior.confidence, cfg.quickRestart])
+  }, [settings.behavior.confidence, settings.sound.enabled, settings.sound.profile, settings.sound.volume, cfg.quickRestart])
 
   useEffect(() => {
     if (!finished || savedRef.current || !startedAt) return
@@ -315,10 +314,7 @@ export default function Type() {
 
       if (effectiveStop === 'word' && value[index] === ' ') {
         const start = old.lastIndexOf(' ') + 1
-        if (value.slice(start, index) !== text.slice(start, index)) {
-          playKeySound(settings, true)
-          return
-        }
+        if (value.slice(start, index) !== text.slice(start, index)) return
       }
 
       if (bad) {
@@ -331,12 +327,8 @@ export default function Type() {
             [expected.toLowerCase()]: (current[expected.toLowerCase()] || 0) + 1
           }))
         }
-        if (effectiveStop === 'letter') {
-          playKeySound(settings, true)
-          return
-        }
+        if (effectiveStop === 'letter') return
       }
-      playKeySound(settings, bad)
     }
 
     if (settings.behavior.strictSpace && value.length > old.length && value.at(-1) === ' ' && text[value.length - 1] !== ' ') return
