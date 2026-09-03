@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 
-const STORAGE='wordspace_settings_v5'
+const STORAGE='wordspace_settings_v6'
+const SOUND_PACK_IDS=['eg-oreo','box-jade','nk-cream']
 
 export const themes={
  wordspace:{name:'WORDSPACE',bg:'#0b0d12',surface:'#10131a',text:'#f0f2f5',muted:'#737b89',faint:'#252b36',error:'#e66b70',caret:'#f7f9fc',accent:'#4d7cff'},
@@ -43,7 +44,7 @@ export const defaults={
  behavior:{stopOnError:'off',confidence:false,strictSpace:false,typedText:'keep',lineScroll:'smooth',capsLockWarning:true,focusWarning:true,minWpm:0,minAccuracy:0},
  caret:{style:'beam',speed:'medium',blink:true,width:2,paceEnabled:false,paceWpm:80},
  typography:{font:'roboto-mono',size:40,lineHeight:1.5,letterSpacing:-0.03,width:1000},
- sound:{enabled:false,volume:0.22,profile:'soft',error:true},
+ sound:{enabled:false,volume:0.35,profile:'eg-oreo'},
  appearance:{liveWpm:true,liveAccuracy:true,timer:'minimal',controls:'hide',lines:3,motion:'full',keymap:false,keymapLayout:'qwerty',showPb:true}
 }
 
@@ -60,11 +61,24 @@ const merge=(a,b)=>({
  appearance:{...a.appearance,...b?.appearance}
 })
 
+const normalizeSettings=value=>{
+ const rawSound=value?.sound||{}
+ const numericVolume=Number(rawSound.volume)
+ return {
+  ...value,
+  sound:{
+   enabled:Boolean(rawSound.enabled),
+   volume:Number.isFinite(numericVolume)?Math.max(0,Math.min(1,numericVolume)):defaults.sound.volume,
+   profile:SOUND_PACK_IDS.includes(rawSound.profile)?rawSound.profile:defaults.sound.profile
+  }
+ }
+}
+
 export function SettingsProvider({children}){
  const[settings,setSettings]=useState(()=>{
   try{
-   const saved=localStorage.getItem(STORAGE)||localStorage.getItem('wordspace_settings_v4')||localStorage.getItem('wordspace_settings_v3')||localStorage.getItem('wordspace_settings_v2')||'{}'
-   return merge(defaults,JSON.parse(saved))
+   const saved=localStorage.getItem(STORAGE)||localStorage.getItem('wordspace_settings_v5')||localStorage.getItem('wordspace_settings_v4')||localStorage.getItem('wordspace_settings_v3')||localStorage.getItem('wordspace_settings_v2')||'{}'
+   return normalizeSettings(merge(defaults,JSON.parse(saved)))
   }catch{return defaults}
  })
  const[panel,setPanel]=useState({open:false,section:'test'})
