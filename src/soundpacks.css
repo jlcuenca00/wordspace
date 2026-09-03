@@ -1,0 +1,15 @@
+.soundPreview{
+  min-width:132px;
+  height:38px;
+  border:1px solid var(--line);
+  background:transparent;
+  padding:0 13px;
+  color:var(--text);
+  font:600 12px/1 Inter,sans-serif;
+  transition:border-color .16s ease,color .16s ease,background .16s ease;
+}
+.soundPreview:hover{
+  border-color:var(--accent);
+  color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 7%,transparent);
+}
