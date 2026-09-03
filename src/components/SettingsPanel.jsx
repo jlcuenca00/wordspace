@@ -24,10 +24,9 @@ const GROUP_COPY = {
   typing: ['Tune the typing feel', 'Error rules, caret behavior and pace training.'],
   display: ['Choose what stays visible', 'Typography, live metrics and training aids.'],
   sound: ['Make every keypress tactile', 'Three recorded keyboard packs, no synthetic clicks.'],
-  theme: ['Set the visual tone', 'Curated themes plus a fully custom color system.']
+  theme: ['Set the visual tone', 'A broad theme library inspired by the variety serious typing sites offer.']
 }
 
-const FEATURED_THEME_IDS = ['wordspace', 'cobalt', 'mono', 'paper', 'void', 'terminal', 'ocean', 'sakura']
 const soundDescriptions = {
   'eg-oreo': 'Rounded, poppy and clean.',
   'box-jade': 'Sharp tactile click with more attack.',
@@ -92,7 +91,7 @@ const Segmented = ({ value, options, onChange, ariaLabel }) => (
 )
 
 const ThemeCard = ({ id, theme, active, onClick }) => (
-  <button className={`themeCardV2 ${active ? 'active' : ''}`} onClick={onClick}>
+  <button className={`themeCardV2 ${active ? 'active' : ''}`} onClick={onClick} title={theme.name}>
     <span className="themeSwatchV2" style={{ background: theme.bg, color: theme.text, borderColor: theme.faint }}>
       <i style={{ background: theme.accent }} />
       <b>Aa</b>
@@ -107,7 +106,6 @@ export default function SettingsPanel() {
   if (!panel.open) return null
 
   const group = SECTION_ALIAS[panel.section] || panel.section || 'test'
-  const activeGroup = GROUPS.find(item => item[0] === group) || GROUPS[0]
   const [heroTitle, heroCopy] = GROUP_COPY[group] || GROUP_COPY.test
   const library = wordLibraries.find(item => item.id === settings.test.language) || wordLibraries[0]
   const selectedSoundPack = soundPacks.find(pack => pack.id === settings.sound.profile) || soundPacks[0]
@@ -319,19 +317,12 @@ export default function SettingsPanel() {
           </>}
 
           {group === 'theme' && <>
-            <SettingsGroup title="Featured themes" description="A shorter first view. The full collection is still available below.">
-              <div className="themeGridV2">
-                {FEATURED_THEME_IDS.map(id => <ThemeCard key={id} id={id} theme={themes[id]} active={settings.theme === id} onClick={() => setTheme(id)} />)}
+            <SettingsGroup title={`All themes · ${Object.keys(themes).length + 1}`} description="Nothing hidden. Scroll the full collection and switch instantly.">
+              <div className="themeGridV2 themeGridAllV2">
+                {Object.entries(themes).map(([id, theme]) => <ThemeCard key={id} id={id} theme={theme} active={settings.theme === id} onClick={() => setTheme(id)} />)}
                 <ThemeCard id="custom" theme={settings.customTheme} active={settings.theme === 'custom'} onClick={() => setTheme('custom')} />
               </div>
             </SettingsGroup>
-
-            <details className="settingsDisclosureV2 moreThemesV2">
-              <summary><div><b>More themes</b><span>{Object.keys(themes).length - FEATURED_THEME_IDS.length} additional color systems.</span></div><i>+</i></summary>
-              <div className="disclosureBodyV2 themeGridV2">
-                {Object.entries(themes).filter(([id]) => !FEATURED_THEME_IDS.includes(id)).map(([id, theme]) => <ThemeCard key={id} id={id} theme={theme} active={settings.theme === id} onClick={() => setTheme(id)} />)}
-              </div>
-            </details>
 
             <details className="settingsDisclosureV2" defaultOpen={settings.theme === 'custom'}>
               <summary><div><b>Custom color lab</b><span>Build your own theme from eight core colors.</span></div><i>+</i></summary>
