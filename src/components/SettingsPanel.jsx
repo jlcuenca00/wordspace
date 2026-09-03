@@ -1,6 +1,7 @@
 import { fontOptions, themes, useSettings } from '../settings'
 import { wordLibraries } from '../wordLibrary'
 import { testPresets } from '../typingData'
+import { playKeySound, preloadSoundPack, soundPacks } from '../keySoundEngine'
 
 const SECTIONS = [
   ['test', 'Test'],
@@ -34,6 +35,15 @@ export default function SettingsPanel() {
   if (!panel.open) return null
   const section = panel.section
   const index = Math.max(0, SECTIONS.findIndex(item => item[0] === section))
+
+  const chooseSoundPack = value => {
+    update('sound', { profile: value })
+    preloadSoundPack(value).catch(() => {})
+  }
+
+  const previewSound = () => {
+    playKeySound(settings.sound.profile, 'Space', settings.sound.volume)
+  }
 
   return <>
     <button className="settingsScrim" aria-label="Close settings" onClick={closeSettings}/>
@@ -95,10 +105,17 @@ export default function SettingsPanel() {
           </>}
 
           {section === 'sound' && <>
-            <Row label="Key sound"><Toggle value={settings.sound.enabled} onChange={value => update('sound', { enabled: value })}/></Row>
-            <Row label="Profile"><Select value={settings.sound.profile} onChange={value => update('sound', { profile: value })}><option value="soft">soft</option><option value="mechanical">mechanical</option><option value="typewriter">typewriter</option><option value="minimal">minimal</option></Select></Row>
+            <Row label="Key sounds"><Toggle value={settings.sound.enabled} onChange={value => {
+              update('sound', { enabled: value })
+              if (value) preloadSoundPack(settings.sound.profile).catch(() => {})
+            }}/></Row>
+            <Row label="Soundpack" hint="Recorded keyboard packs. Space, Enter, Shift, Backspace and other supported keys use each pack's own samples.">
+              <Select value={settings.sound.profile} onChange={chooseSoundPack}>
+                {soundPacks.map(pack => <option key={pack.id} value={pack.id}>{pack.name}</option>)}
+              </Select>
+            </Row>
             <Row label="Volume"><Range value={settings.sound.volume} min={0} max={1} step={0.05} onChange={value => update('sound', { volume: value })}/></Row>
-            <Row label="Error sound"><Toggle value={settings.sound.error} onChange={value => update('sound', { error: value })}/></Row>
+            <Row label="Preview" hint="Uses the selected pack's actual spacebar sound."><button className="soundPreview" onClick={previewSound}>Play spacebar</button></Row>
           </>}
 
           {section === 'appearance' && <>
